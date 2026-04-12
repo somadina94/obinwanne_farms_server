@@ -1,0 +1,37 @@
+version: "3.8"
+
+# Default project name is the parent dir ("server"); same as 4ksports/server → both used project "server" and service "api", so deploys replaced each other.
+name: obinwanne-farms-server
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - NODE_ENV=${NODE_ENV}
+        - PORT=${PORT}
+        - DATABASE=${DATABASE}
+        - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+        - JWT_SECRET=${JWT_SECRET}
+        - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
+        - EMAIL_TO=${EMAIL_TO}
+        - EMAIL_FROM=${EMAIL_FROM}
+        - EMAIL_HOST=${EMAIL_HOST}
+        - EMAIL_ADDRESS=${EMAIL_ADDRESS}
+        - EMAIL_PASSWORD=${EMAIL_PASSWORD}
+        - COMPANY_NAME=${COMPANY_NAME}
+    container_name: obinwanne-farms-server
+    ports:
+      - "6600:6600"
+    environment:
+      NODE_ENV: production
+    env_file:
+      - .env
+    restart: unless-stopped
+    networks:
+      - obinwanne-farms-network
+
+networks:
+  obinwanne-farms-network:
+    driver: bridge

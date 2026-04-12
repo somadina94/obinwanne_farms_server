@@ -1,0 +1,43 @@
+{
+  "name": "obinwanne-farms",
+  "version": "1.0.0",
+  "description": "E-commerce site for a farm",
+  "license": "ISC",
+  "author": "JAHBYTE",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "dev": "sudo tsx watch src/server.ts",
+    "build": "tsc && cp -r src/views dist/",
+    "start": "node dist/server.js"
+  },
+  "dependencies": {
+    "backblaze-b2": "^1.7.1",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.1",
+    "express": "^5.2.1",
+    "html-to-text": "^9.0.5",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.4.1",
+    "multer": "^2.1.1",
+    "nodemailer": "^8.0.5",
+    "pug": "^3.0.4",
+    "validator": "^13.15.35"
+  },
+  "devDependencies": {
+    "@babel/preset-typescript": "^7.28.5",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/html-to-text": "^9.0.4",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/multer": "^2.1.0",
+    "@types/node": "^25.6.0",
+    "@types/nodemailer": "^8.0.0",
+    "@types/pug": "^2.0.10",
+    "@types/validator": "^13.15.10",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}
