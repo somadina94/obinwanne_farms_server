@@ -21,6 +21,11 @@ services:
         - EMAIL_ADDRESS=${EMAIL_ADDRESS}
         - EMAIL_PASSWORD=${EMAIL_PASSWORD}
         - COMPANY_NAME=${COMPANY_NAME}
+        - B2_APPLICATION_KEY_ID=${B2_APPLICATION_KEY_ID}
+        - B2_APPLICATION_KEY=${B2_APPLICATION_KEY}
+        - B2_BUCKET_ID=${B2_BUCKET_ID}
+        - PAYSTACK_SECRET_KEY=${PAYSTACK_SECRET_KEY}
+        - PAYSTACK_PUBLIC_KEY=${PAYSTACK_PUBLIC_KEY}
     container_name: obinwanne-farms-server
     ports:
       - "6600:6600"
