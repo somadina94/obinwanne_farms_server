@@ -1,0 +1,12 @@
+extends baseEmail
+
+block content
+  p A new contact form request has been submitted on the website.
+  p(style='margin-top:16px') <strong>Contact details</strong>
+  p(style='margin:0') Name: #{name}
+  p(style='margin:0') Email: #{email}
+  p(style='margin:0') Phone: #{phone}
+  p(style='margin-top:20px') <strong>Message</strong>
+  p.message-box #{message}
+  p(style='margin-top:20px;font-size:13px;color:#6d7f73')
+    | Business card on file: #{companyAddress} | #{companyPhone}
