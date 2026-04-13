@@ -52,9 +52,25 @@ export const updateMe = catchAsync(
       );
     }
 
-    // Find and update user
-    const updatedUser = await User.findByIdAndUpdate(req.user?._id, req.body, {
+    const allowed = [
+      "name",
+      "email",
+      "phone",
+      "address",
+      "city",
+      "state",
+      "zip",
+    ] as const;
+    const filtered: Record<string, string> = {};
+    for (const key of allowed) {
+      if (req.body[key] !== undefined) {
+        filtered[key] = req.body[key];
+      }
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(req.user?._id, filtered, {
       new: true,
+      runValidators: true,
     });
 
     // Send response

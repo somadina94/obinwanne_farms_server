@@ -21,5 +21,12 @@ declare module "backblaze-b2" {
       data: Buffer;
       mime?: string;
     }): Promise<{ data: { fileName: string; fileId: string } }>;
+
+    getDownloadAuthorization(args: {
+      bucketId: string;
+      fileNamePrefix: string;
+      validDurationInSeconds: number;
+      b2ContentDisposition?: string;
+    }): Promise<{ data: { authorizationToken: string } }>;
   }
 }

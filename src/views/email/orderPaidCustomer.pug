@@ -1,0 +1,22 @@
+extends baseEmail
+
+block content
+  p Hello #{firstName},
+  p Thank you — we&apos;ve received your payment successfully.
+  p
+    strong Order reference: 
+    | #{orderRef}
+  p
+    strong Total paid: 
+    | ₦#{totalLabel}
+  p(style='margin-top:20px') <strong>Items</strong>
+  table(role='presentation', border='0', cellpadding='0', cellspacing='0', style='width:100%;border-collapse:collapse')
+    tbody
+      each row in itemRows
+        tr
+          td(style='padding:8px 0;border-bottom:1px solid #eee')
+            | #{row.title} 
+            span(style='color:#666') (#{row.productType}) × #{row.quantity}
+          td(style='padding:8px 0;border-bottom:1px solid #eee;text-align:right;white-space:nowrap') ₦#{row.lineLabel}
+  p(style='margin-top:16px;font-size:13px;color:#666') View your orders anytime on the site under your account.
+  p Thanks for shopping with #{companyName}.

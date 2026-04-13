@@ -1,0 +1,26 @@
+extends baseEmail
+
+block content
+  p A payment was confirmed via Paystack.
+  p
+    strong Reference: 
+    | #{orderRef}
+    br
+    strong Order ID: 
+    | #{orderId}
+    br
+    strong Total: 
+    | ₦#{totalLabel}
+  p(style='margin-top:16px') <strong>Customer</strong>
+  p(style='margin:0') Name: #{customerName}
+  p(style='margin:0') Email: #{customerEmail}
+  p(style='margin:0') Phone: #{customerPhone}
+  p(style='margin:0') Address: #{addressLine}
+  p(style='margin-top:20px') <strong>Line items</strong>
+  table(role='presentation', border='0', cellpadding='0', cellspacing='0', style='width:100%;border-collapse:collapse')
+    tbody
+      each row in itemRows
+        tr
+          td(style='padding:8px 0;border-bottom:1px solid #eee')
+            | #{row.title} (#{row.productType}) × #{row.quantity}
+          td(style='padding:8px 0;border-bottom:1px solid #eee;text-align:right') ₦#{row.lineLabel}
