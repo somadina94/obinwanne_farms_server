@@ -5,7 +5,7 @@ import {
   login,
   logout,
   protect,
-  resetPassowrd,
+  resetPassword,
   restrictTo,
   updatePassword,
 } from "../controllers/authController.js";
@@ -23,7 +23,7 @@ router.post("/signUp", signUp);
 router.post("/login", login);
 router.post("/logout", logout);
 router.post("/forgotPassword", forgotPassword);
-router.post("/resetPassword", resetPassowrd);
+router.post("/resetPassword", resetPassword);
 
 router.use(protect);
 

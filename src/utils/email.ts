@@ -32,13 +32,18 @@ class Email {
     });
   }
 
-  async send(template: string, subject: string) {
+  async send(
+    template: string,
+    subject: string,
+    locals: Record<string, unknown> = {},
+  ) {
     const html = pug.renderFile(
       path.join(__dirname, "../views/email", `${template}.pug`),
       {
         message: this.message,
         firstName: this.firstName,
         subject,
+        ...locals,
       },
     );
 
@@ -61,11 +66,12 @@ class Email {
     await this.send("welcome", `Welcome to ${process.env.COMPANY_NAME}`);
   }
 
-  async sendPasswordReset() {
-    await this.send(
-      "passwordReset",
-      "Your password reset token (valid for only 10 minutes)",
-    );
+  async sendPasswordReset(resetUrl: string) {
+    const company = process.env.COMPANY_NAME ?? "Obinwanne Farms";
+    await this.send("passwordReset", `Reset your ${company} password`, {
+      resetUrl,
+      companyName: company,
+    });
   }
 }
 

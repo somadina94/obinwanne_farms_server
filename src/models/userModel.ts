@@ -84,14 +84,14 @@ userSchema.methods.correctPassword = async function (
 };
 
 userSchema.methods.createPasswordResetToken = function (): string {
-  const resetToken = Math.floor(Math.random() * 900000 + 100000).toString();
+  const resetToken = crypto.randomBytes(32).toString("hex");
 
   this.passwordResetToken = crypto
     .createHash("sha256")
     .update(resetToken)
     .digest("hex");
 
-  this.passwordResetTokenExpires = new Date(Date.now() + 1000 * 60 * 60); // 1 hour
+  this.passwordResetTokenExpires = new Date(Date.now() + 1000 * 60 * 60);
 
   return resetToken;
 };

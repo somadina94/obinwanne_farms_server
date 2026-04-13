@@ -201,40 +201,48 @@ export const updatePassword = catchAsync(
   },
 );
 
+const forgotPasswordResponseMessage =
+  "If an account exists for this email, you will receive password reset instructions shortly.";
+
 // FORGOT PASSWORD
 export const forgotPassword = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    // 1) Get user with posted email
     const { email } = req.body;
-
-    const user = await User.findOne({ email });
-
-    if (!user) {
-      return next(new AppError("Email not registered with us.", 404));
+    if (!email || typeof email !== "string") {
+      return next(new AppError("Please provide your email", 400));
     }
 
-    // 2) Create random reset token
+    const user = await User.findOne({ email: email.trim().toLowerCase() });
+
+    if (!user) {
+      return res.status(200).json({
+        status: "success",
+        message: forgotPasswordResponseMessage,
+      });
+    }
+
     const resetToken = user.createPasswordResetToken();
     await user.save({ validateBeforeSave: false });
 
-    // 3) Send resetToken to user's phone number
     try {
-      const message = `Your ${process.env.COMPANY_NAME} 6-digit password reset token: ${resetToken}`;
-      console.log(message);
-      await new Email(user, message).sendPasswordReset();
+      const frontendBase = (
+        process.env.FRONTEND_URL ?? "http://localhost:3000"
+      ).replace(/\/$/, "");
+      const resetUrl = `${frontendBase}/reset-password?token=${encodeURIComponent(resetToken)}`;
+      await new Email(user, "").sendPasswordReset(resetUrl);
       res.status(200).json({
         status: "success",
-        message: "Password reset token sent to your registered email",
+        message: forgotPasswordResponseMessage,
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
       user.passwordResetToken = null;
       user.passwordResetTokenExpires = null;
       await user.save({ validateBeforeSave: false });
 
       return next(
         new AppError(
-          "There was an error sending the email reset token, try again later!",
+          "There was an error sending the reset email. Please try again later.",
           500,
         ),
       );
@@ -243,12 +251,26 @@ export const forgotPassword = catchAsync(
 );
 
 // RESET PASSWORD
-export const resetPassowrd = catchAsync(
+export const resetPassword = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    // 1) Get random reset token from user and get user with it
+    const { token, password, passwordConfirm } = req.body;
+    if (!token || typeof token !== "string") {
+      return next(new AppError("Invalid or missing reset token.", 400));
+    }
+    if (!password || !passwordConfirm) {
+      return next(
+        new AppError("Please provide your new password and confirmation.", 400),
+      );
+    }
+    if (password !== passwordConfirm) {
+      return next(
+        new AppError("Your new password and confirmation do not match.", 400),
+      );
+    }
+
     const hashedToken = crypto
       .createHash("sha256")
-      .update(req.body.token)
+      .update(token)
       .digest("hex");
 
     const user = await User.findOne({
@@ -261,8 +283,8 @@ export const resetPassowrd = catchAsync(
       return next(new AppError("Token is invalid or has expired.", 400));
     }
 
-    user.password = req.body.password;
-    user.passwordConfirm = req.body.passwordConfirm;
+    user.password = password;
+    user.passwordConfirm = passwordConfirm;
     user.passwordResetToken = null;
     user.passwordResetTokenExpires = null;
 
