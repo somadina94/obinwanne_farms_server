@@ -1,0 +1,130 @@
+# =============================================================================
+# CI/CD — build image on GitHub, deploy to VPS
+# =============================================================================
+#
+# Triggers:
+#   - pull_request → verify only
+#   - push to main/master → verify → push-image → deploy
+#
+# Deploy model:
+#   Build runs on GitHub runners. VPS: git pull + ./deploy.sh (docker pull + up).
+#
+# Required GitHub secrets:
+#   VPS_HOST, VPS_USERNAME, VPS_PASSWORD, VPS_PORT
+#   VPS_DEPLOY_PATH (optional, default ~/obinwanne_farms/server)
+# =============================================================================
+
+name: CI
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - main
+      - master
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Prepare compose env
+        run: cp .env.example .env
+
+      - name: Validate Docker Compose
+        run: |
+          docker compose -f docker-compose.vps.yml config
+          docker compose config
+
+      - name: Build production image
+        run: docker build -t obinwanne-farms-server:test .
+
+      - name: Ensure deploy scripts are executable
+        run: chmod +x deploy.sh && test -x deploy.sh
+
+  push-image:
+    needs: verify
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ github.repository }}:${{ github.sha }}
+
+  deploy:
+    needs: push-image
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    concurrency:
+      group: obinwanne-farms-server-vps-deploy
+      cancel-in-progress: false
+
+    steps:
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: ${{ secrets.VPS_PORT }}
+          command_timeout: 30m
+          script: |
+            set -e
+            DEPLOY_PATH="${{ secrets.VPS_DEPLOY_PATH }}"
+            if [ -z "$DEPLOY_PATH" ]; then DEPLOY_PATH="$HOME/obinwanne_farms/server"; fi
+            if [ ! -d "$DEPLOY_PATH" ]; then
+              echo "Deploy directory not found: $DEPLOY_PATH"
+              exit 1
+            fi
+            cd "$DEPLOY_PATH"
+            git fetch origin
+            git checkout "${{ github.ref_name }}"
+            git pull origin "${{ github.ref_name }}"
+            chmod +x ./deploy.sh
+            echo "Logging in to ghcr.io for image pull..."
+            echo "${{ github.token }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+            export DEPLOY_BUILD_LOCAL=0
+            export OBINWANNE_SERVER_IMAGE="ghcr.io/${{ github.repository }}:latest"
+            ./deploy.sh

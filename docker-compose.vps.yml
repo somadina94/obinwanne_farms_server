@@ -1,0 +1,28 @@
+# Production stack for EC2 / VPS — used by ./deploy.sh (project: obinwanne-farms-server-vps)
+#
+# Normal deploy: image from GHCR (built in GitHub Actions). VPS only pulls.
+# The `build:` block is for DEPLOY_BUILD_LOCAL=1 fallback only.
+# Secrets stay in host .env (never baked into the image).
+
+name: obinwanne-farms-server-vps
+
+services:
+  api:
+    image: ${OBINWANNE_SERVER_IMAGE:-ghcr.io/somadina94/obinwanne_farms_server:latest}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: obinwanne-farms-server
+    ports:
+      - "${PORT:-6600}:${PORT:-6600}"
+    env_file:
+      - .env
+    restart: unless-stopped
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - obinwanne-farms-server-vps-network
+
+networks:
+  obinwanne-farms-server-vps-network:
+    driver: bridge
